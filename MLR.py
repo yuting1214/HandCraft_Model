@@ -15,18 +15,32 @@ class MulLR:
         pr = self.softmax(Z)
         pred = np.argmax(pr, axis=1)
         return np.array([self.label_key[value] for value in pred])
-    def Gradient_descent(self, X, Y, max_iter=1000, lr=0.1, lambda_=0.01):
-        def Cost(X, Y, theta, lambda_):
+    def Gradient_descent(self, X, Y, max_iter=1000, lr=0.1, lambda_=0.01, penalty = 'l1'):
+        def Cost(X, Y, theta, lambda_, penalty):
             Z = - X @ theta
             m = X.shape[0]
-            cost = 1/m * (np.trace(X @ theta @ Y.T) + np.sum(np.log(np.sum(np.exp(Z), axis = 1)))) + \
-                    lambda_ * np.sum(theta**2)
+            loss = 1/m * (np.trace(X @ theta @ Y.T) + np.sum(np.log(np.sum(np.exp(Z), axis = 1)))) 
+            if penalty == 'l2':
+                regularization = lambda_/(2*m) * np.sum(np.square(theta[1:]))  # exclude bias term from regularization
+            elif penalty == 'l1':
+                regularization = lambda_/(m) * np.sum(np.abs(theta[1:]))
+            else:
+                regularization = 0
+            cost = loss + regularization
             return cost
-        def Gradient(X, Y, theta, lambda_):
+        def Gradient(X, Y, theta, lambda_, penalty):
             Z = - X @ theta
             pr = self.softmax(Z)
             m = X.shape[0]
-            gradient = 1/m * (X.T @ (Y-pr)) + 2 * lambda_ * theta
+            d_loss = 1/m * (X.T @ (Y-pr))
+            if penalty == 'l2':
+                d_regul =  lambda_ * theta
+            elif penalty == 'l1':
+                d_regul = lambda_ * np.sign(theta)
+            else:
+                d_regul = np.zeros(theta.shape)
+            d_regul[0, :] = 0
+            gradient = d_loss + d_regul
             return gradient
         def OneHot(y):
             u = np.unique(y)
@@ -44,8 +58,8 @@ class MulLR:
         learning_curve = []
         while iter_ < max_iter:
             iter_ += 1
-            theta = theta - lr * Gradient(X, Y_one, theta, lambda_)
-            learning_curve.append(Cost(X, Y_one, theta, lambda_))
+            theta = theta - lr * Gradient(X, Y_one, theta, lambda_, penalty)
+            learning_curve.append(Cost(X, Y_one, theta, lambda_, penalty))
         learning_df = pd.DataFrame({
             'iter': range(iter_),
             'loss': learning_curve
