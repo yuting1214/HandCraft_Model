@@ -1,6 +1,20 @@
 class MulLR:
     def fit(self, X, Y):
         self.theta, self.learning_curve = self.Gradient_descent(X, Y)
+    def softmax(self, X):
+        return np.exp(X)/ np.sum(np.exp(X), axis = 1).reshape(-1,1)
+    def loss_plot(self):
+        return self.learning_curve.plot(
+            x='iter',
+            y='loss',
+            xlabel='iter',
+            ylabel='loss'
+        )
+    def predict(self, X_new):
+        Z = -X_new @ self.theta
+        pr = self.softmax(Z)
+        pred = np.argmax(pr, axis=1)
+        return np.array([self.label_key[value] for value in pred])
     def Gradient_descent(self, X, Y, max_iter=1000, lr=0.1, lambda_=0.01):
         def Cost(X, Y, theta, lambda_):
             Z = - X @ theta
