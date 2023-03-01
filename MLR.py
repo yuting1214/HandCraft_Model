@@ -1,21 +1,103 @@
 class MulLR:
-    def fit(self, X, Y):
-        self.theta, self.learning_curve = self.Gradient_descent(X, Y)
+    def __init__(self, max_iter=1000, lr=0.1, lambda_=0.01, penalty = 'l2'):
+        """
+        Initialize a multinomial logistic regression object.
+
+        Parameters
+        ----------
+        max_iter : int, optional (default=1000)
+            Maximum number of iterations for gradient descent
+        lr : float, optional (default=0.1)
+            Learning rate for gradient descent
+        lambda_ : float, optional (default=0.01)
+            Regularization parameter
+        penalty : {'l1', 'l2'}, optional (default='l2')
+            Type of regularization penalty to use
+        """
+        self.max_iter = max_iter
+        self.lr = lr
+        self.lambda_ = lambda_
+        self.penalty = penalty
+        
     def softmax(self, X):
+        """
+        Compute the softmax activation function.
+
+        Parameters
+        ----------
+        X : numpy array
+            The input data of shape (n_samples, n_classes).
+
+        Returns
+        -------
+        numpy array
+            The output of the softmax function of shape (n_samples, n_classes).
+        """
         return np.exp(X)/ np.sum(np.exp(X), axis = 1).reshape(-1,1)
-    def loss_plot(self):
-        return self.learning_curve.plot(
-            x='iter',
-            y='loss',
-            xlabel='iter',
-            ylabel='loss'
-        )
+    
+    def fit(self, X, Y):
+        """
+        Fit the multinomial logistic regression model to the training data.
+
+        Parameters
+        ----------
+        X : numpy array
+            The input data of shape (n_samples, n_features).
+        Y : numpy array
+            The target values of shape (n_samples,).
+
+        Returns
+        -------
+        None
+        """
+        self.theta, self.learning_curve = self.Gradient_descent(X, Y, self.max_iter,
+                                                                self.lr, self.lambda_, self.penalty)
+
     def predict(self, X_new):
+        """
+        Predict the class labels for new data.
+
+        Parameters
+        ----------
+        X_new : numpy array
+            The input data of shape (n_samples, n_features).
+
+        Returns
+        -------
+        numpy array
+            The predicted class labels of shape (n_samples,).
+        """
         Z = -X_new @ self.theta
         pr = self.softmax(Z)
         pred = np.argmax(pr, axis=1)
         return np.array([self.label_key[value] for value in pred])
-    def Gradient_descent(self, X, Y, max_iter=1000, lr=0.1, lambda_=0.01, penalty = 'l1'):
+    
+    def Gradient_descent(self, X, Y, max_iter, lr, lambda_, penalty):
+        """
+        Perform gradient descent to optimize the cost function and obtain the weights.
+
+        Parameters
+        ----------
+        X : numpy array
+            The input data of shape (n_samples, n_features).
+        Y : numpy array
+            The target values of shape (n_samples,).
+        max_iter : int
+            Maximum number of iterations for gradient descent
+        lr : float
+            Learning rate for gradient descent
+        lambda_ : float
+            Regularization parameter
+        penalty : {'l1', 'l2'}
+            Type of regularization penalty to use
+
+        Returns
+        -------
+        theta : numpy array
+            The weights of the logistic regression model of shape (n_features, n_classes).
+        learning_df : pandas dataframe
+            A dataframe containing the iteration number and loss for each iteration of gradient descent.
+        """
         def Cost(X, Y, theta, lambda_, penalty):
             Z = - X @ theta
             m = X.shape[0]
@@ -65,3 +147,18 @@ class MulLR:
             'loss': learning_curve
         })
         return theta, learning_df
+
+    def loss_plot(self):
+    """
+    Plots the learning curve.
+
+    Returns:
+    --------
+    A matplotlib plot of the learning curve.
+    """
+        return self.learning_curve.plot(
+            x='iter',
+            y='loss',
+            xlabel='iter',
+            ylabel='loss'
+        )
